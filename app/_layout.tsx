@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AlertProvider, AuthRouter } from '@/template';
+import { AlertProvider } from '@/template';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ParkingProvider } from '@/contexts/ParkingContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
