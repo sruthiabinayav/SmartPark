@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AlertProvider } from '@/template';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ParkingProvider } from '@/contexts/ParkingContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { StatusBar } from 'expo-status-bar';
 
@@ -12,50 +13,125 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <LanguageProvider>
           <AuthProvider>
-            <ParkingProvider>
-              <StatusBar style="light" />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="login" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen 
-                  name="parking-details"
-                  options={{
-                    headerShown: true,
-                    headerTitle: 'Parking Details',
-                    headerStyle: { backgroundColor: '#0D0D0D' },
-                    headerTintColor: '#FFFFFF',
-                  }}
-                />
-                <Stack.Screen 
-                  name="booking-confirm"
-                  options={{
-                    headerShown: true,
-                    headerTitle: 'Confirm Booking',
-                    headerStyle: { backgroundColor: '#0D0D0D' },
-                    headerTintColor: '#FFFFFF',
-                  }}
-                />
-                <Stack.Screen 
-                  name="add-parking"
-                  options={{
-                    headerShown: true,
-                    headerTitle: 'Add Parking Space',
-                    headerStyle: { backgroundColor: '#0D0D0D' },
-                    headerTintColor: '#FFFFFF',
-                  }}
-                />
-                <Stack.Screen 
-                  name="ai-assistant"
-                  options={{
-                    headerShown: true,
-                    headerTitle: 'AI Assistant',
-                    headerStyle: { backgroundColor: '#0D0D0D' },
-                    headerTintColor: '#FFFFFF',
-                  }}
-                />
-              </Stack>
-            </ParkingProvider>
+            <NotificationProvider>
+              <ParkingProvider>
+                <StatusBar style="light" />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="onboarding" />
+                  <Stack.Screen name="login" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen 
+                    name="parking-details"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Parking Details',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="booking-confirm"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Confirm Booking',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="add-parking"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Add Parking Space',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="ai-assistant"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'AI Assistant',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="review"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Write Review',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="notifications"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Notifications',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="analytics"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Analytics',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="edit-profile"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Edit Profile',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="notification-settings"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Notifications',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="payment-methods"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Payment Methods',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="help-support"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Help & Support',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="privacy-policy"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Privacy Policy',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                </Stack>
+              </ParkingProvider>
+            </NotificationProvider>
           </AuthProvider>
         </LanguageProvider>
       </SafeAreaProvider>

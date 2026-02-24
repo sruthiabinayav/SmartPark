@@ -1,60 +1,62 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
 import { ParkingSpace, Booking } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
 import {
-  getParkingSpaces,
-  saveParkingSpaces,
-  addParkingSpace as addParkingSpaceStorage,
-  updateParkingSpace as updateParkingSpaceStorage,
-  deleteParkingSpace as deleteParkingSpaceStorage,
-  getBookings,
-  addBooking as addBookingStorage,
-  updateBooking as updateBookingStorage,
-} from '@/services/storage';
-import { MOCK_PARKING_SPACES } from '@/services/mockData';
+  fetchParkingSpaces,
+  createParkingSpace as dbCreateParkingSpace,
+  updateParkingSpace as dbUpdateParkingSpace,
+  deleteParkingSpace as dbDeleteParkingSpace,
+  fetchUserBookings,
+  createBooking as dbCreateBooking,
+  updateBookingStatus as dbUpdateBookingStatus,
+  subscribeToParkingUpdates,
+  subscribeToBookingUpdates,
+} from '@/services/database';
+import { scheduleBookingReminder, scheduleLocalNotification } from '@/services/notifications';
 
 interface ParkingContextType {
   parkingSpaces: ParkingSpace[];
   bookings: Booking[];
   loading: boolean;
-  addParkingSpace: (space: ParkingSpace) => Promise<void>;
-  updateParkingSpace: (space: ParkingSpace) => Promise<void>;
-  deleteParkingSpace: (spaceId: string) => Promise<void>;
-  addBooking: (booking: Booking) => Promise<void>;
-  updateBooking: (booking: Booking) => Promise<void>;
-  refreshData: () => Promise<void>;
+  refreshParkingSpaces: () => Promise<void>;
+  refreshBookings: () => Promise<void>;
+  addParkingSpace: (parking: Omit<ParkingSpace, 'id' | 'createdAt'>) => Promise<void>;
+  updateParkingSpace: (id: string, updates: Partial<ParkingSpace>) => Promise<void>;
+  removeParkingSpace: (id: string) => Promise<void>;
+  createBooking: (booking: {
+    parkingId: string;
+    startTime: string;
+    endTime: string;
+    totalPrice: number;
+  }) => Promise<void>;
+  cancelBooking: (bookingId: string) => Promise<void>;
+  completeBooking: (bookingId: string) => Promise<void>;
 }
 
 export const ParkingContext = createContext<ParkingContextType | undefined>(undefined);
 
 export function ParkingProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [parkingSpaces, setParkingSpaces] = useState<ParkingSpace[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user) {
+      loadData();
+      const cleanup = setupSubscriptions();
+      return cleanup;
+    } else {
+      setParkingSpaces([]);
+      setBookings([]);
+      setLoading(false);
+    }
+  }, [user]);
 
   async function loadData() {
+    setLoading(true);
     try {
-      let spaces = await getParkingSpaces();
-      
-      // Initialize with mock data if empty
-      if (spaces.length === 0) {
-        spaces = MOCK_PARKING_SPACES;
-        await saveParkingSpaces(spaces);
-      }
-      
-      const loadedBookings = await getBookings();
-      
-      // Populate parking space details in bookings
-      const enrichedBookings = loadedBookings.map(booking => ({
-        ...booking,
-        parkingSpace: spaces.find(s => s.id === booking.parkingSpaceId),
-      }));
-      
-      setParkingSpaces(spaces);
-      setBookings(enrichedBookings);
+      await Promise.all([refreshParkingSpaces(), refreshBookings()]);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -62,39 +64,135 @@ export function ParkingProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function addParkingSpace(space: ParkingSpace) {
-    await addParkingSpaceStorage(space);
-    setParkingSpaces(prev => [...prev, space]);
+  function setupSubscriptions() {
+    if (!user) return () => {};
+
+    const parkingChannel = subscribeToParkingUpdates((payload) => {
+      console.log('Parking update:', payload);
+      refreshParkingSpaces();
+    });
+
+    const bookingChannel = subscribeToBookingUpdates(user.id, (payload) => {
+      console.log('Booking update:', payload);
+      refreshBookings();
+    });
+
+    return () => {
+      parkingChannel.unsubscribe();
+      bookingChannel.unsubscribe();
+    };
   }
 
-  async function updateParkingSpace(space: ParkingSpace) {
-    await updateParkingSpaceStorage(space);
-    setParkingSpaces(prev => prev.map(s => (s.id === space.id ? space : s)));
+  async function refreshParkingSpaces() {
+    try {
+      const spaces = await fetchParkingSpaces();
+      setParkingSpaces(spaces.map(convertFromDb));
+    } catch (error) {
+      console.error('Error fetching parking spaces:', error);
+    }
   }
 
-  async function deleteParkingSpace(spaceId: string) {
-    await deleteParkingSpaceStorage(spaceId);
-    setParkingSpaces(prev => prev.filter(s => s.id !== spaceId));
-  }
-
-  async function addBooking(booking: Booking) {
-    const parkingSpace = parkingSpaces.find(s => s.id === booking.parkingSpaceId);
-    const enrichedBooking = { ...booking, parkingSpace };
+  async function refreshBookings() {
+    if (!user) return;
     
-    await addBookingStorage(booking);
-    setBookings(prev => [...prev, enrichedBooking]);
+    try {
+      const userBookings = await fetchUserBookings(user.id, user.role);
+      setBookings(userBookings.map(convertBookingFromDb));
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    }
   }
 
-  async function updateBooking(booking: Booking) {
-    const parkingSpace = parkingSpaces.find(s => s.id === booking.parkingSpaceId);
-    const enrichedBooking = { ...booking, parkingSpace };
-    
-    await updateBookingStorage(booking);
-    setBookings(prev => prev.map(b => (b.id === booking.id ? enrichedBooking : b)));
+  async function addParkingSpace(parking: Omit<ParkingSpace, 'id' | 'createdAt'>) {
+    try {
+      await dbCreateParkingSpace(parking);
+      await refreshParkingSpaces();
+      
+      await scheduleLocalNotification(
+        'Parking Space Created',
+        `Your parking space "${parking.title}" is now live!`,
+        { type: 'parking_created' }
+      );
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to create parking space');
+    }
   }
 
-  async function refreshData() {
-    await loadData();
+  async function updateParkingSpace(id: string, updates: Partial<ParkingSpace>) {
+    try {
+      await dbUpdateParkingSpace(id, updates);
+      await refreshParkingSpaces();
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to update parking space');
+    }
+  }
+
+  async function removeParkingSpace(id: string) {
+    try {
+      await dbDeleteParkingSpace(id);
+      await refreshParkingSpaces();
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to delete parking space');
+    }
+  }
+
+  async function createBooking(booking: {
+    parkingId: string;
+    startTime: string;
+    endTime: string;
+    totalPrice: number;
+  }) {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const newBooking = await dbCreateBooking({
+        ...booking,
+        driverId: user.id,
+      });
+
+      await refreshBookings();
+      
+      const parking = parkingSpaces.find(p => p.id === booking.parkingId);
+      if (parking) {
+        await scheduleBookingReminder(
+          newBooking.id,
+          parking.title,
+          new Date(booking.startTime)
+        );
+      }
+
+      await scheduleLocalNotification(
+        'Booking Confirmed!',
+        `Your booking at ${parking?.title || 'parking space'} is confirmed`,
+        { bookingId: newBooking.id, type: 'booking_confirmed' }
+      );
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to create booking');
+    }
+  }
+
+  async function cancelBooking(bookingId: string) {
+    try {
+      await dbUpdateBookingStatus(bookingId, 'cancelled');
+      await refreshBookings();
+      
+      await scheduleLocalNotification(
+        'Booking Cancelled',
+        'Your booking has been cancelled',
+        { bookingId, type: 'booking_cancelled' }
+      );
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to cancel booking');
+    }
+  }
+
+  async function completeBooking(bookingId: string) {
+    try {
+      await dbUpdateBookingStatus(bookingId, 'completed');
+      await refreshBookings();
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to complete booking');
+    }
   }
 
   return (
@@ -103,15 +201,59 @@ export function ParkingProvider({ children }: { children: ReactNode }) {
         parkingSpaces,
         bookings,
         loading,
+        refreshParkingSpaces,
+        refreshBookings,
         addParkingSpace,
         updateParkingSpace,
-        deleteParkingSpace,
-        addBooking,
-        updateBooking,
-        refreshData,
+        removeParkingSpace,
+        createBooking,
+        cancelBooking,
+        completeBooking,
       }}
     >
       {children}
     </ParkingContext.Provider>
   );
+}
+
+function convertFromDb(space: any): ParkingSpace {
+  return {
+    id: space.id,
+    ownerId: space.owner_id,
+    title: space.title,
+    description: space.description || '',
+    address: space.address,
+    latitude: space.latitude,
+    longitude: space.longitude,
+    pricePerHour: parseFloat(space.price_per_hour),
+    available: space.available,
+    parkingType: space.parking_type,
+    spaceType: space.space_type,
+    features: space.features || [],
+    rating: space.average_rating ? parseFloat(space.average_rating) : undefined,
+    totalBookings: space.total_bookings || 0,
+    createdAt: space.created_at,
+  };
+}
+
+function convertBookingFromDb(booking: any): Booking {
+  return {
+    id: booking.id,
+    parkingId: booking.parking_id,
+    driverId: booking.driver_id,
+    startTime: booking.start_time,
+    endTime: booking.end_time,
+    totalPrice: parseFloat(booking.total_price),
+    status: booking.status,
+    createdAt: booking.created_at,
+    parking: booking.parking ? convertFromDb(booking.parking) : undefined,
+    driver: booking.driver ? {
+      id: booking.driver.id,
+      email: booking.driver.email,
+      name: booking.driver.name || booking.driver.username,
+      username: booking.driver.username,
+      role: 'driver',
+      createdAt: booking.driver.created_at,
+    } : undefined,
+  };
 }

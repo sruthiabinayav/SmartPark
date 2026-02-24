@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, Dimensions, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -9,8 +9,8 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { Screen } from '@/components/layout/Screen';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ParkingCard } from '@/components/feature/ParkingCard';
 import { ParkingMap } from '@/components/feature/ParkingMap';
+import { ParkingCard } from '@/components/feature/ParkingCard';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 import { ParkingSpace, ParkingRecommendation } from '@/types';
 import {
@@ -89,83 +89,243 @@ export default function HomeScreen() {
   }
 
   function renderDriverView() {
+    const totalBookings = 6;
+    const activeBookings = 1;
+    const totalSpent = 645;
+    const availableSpaces = parkingSpaces.filter(s => s.available).length;
+    const totalSpaces = parkingSpaces.length;
+
+    const bestOverall = recommendations[0];
+    const bestValue = recommendations.find(r => r.parking.pricePerHour <= 20) || recommendations[1];
+    const mostPopular = recommendations.find(r => (r.parking.totalBookings || 0) > 100) || recommendations[2];
+
     return (
-      <>
-        <View style={styles.mapContainer}>
-          <ParkingMap
-            userLatitude={location?.coords.latitude || 13.0827}
-            userLongitude={location?.coords.longitude || 80.2707}
-            parkingSpaces={parkingSpaces}
-            onMarkerPress={(spaceId) =>
-              router.push({
-                pathname: '/parking-details',
-                params: { id: spaceId },
-              })
-            }
-          />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Welcome Header */}
+        <View style={styles.welcomeSection}>
+          <View>
+            <Text style={styles.welcomeTitle}>
+              Welcome back, <Text style={styles.welcomeName}>{user?.name || 'Driver'}</Text>
+            </Text>
+            <Text style={styles.welcomeSubtitle}>
+              Here is your parking activity overview and AI recommendations.
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.content}>
-          <View style={styles.headerRow}>
-            <Text style={styles.sectionTitle}>{t('aiRecommendations')}</Text>
-            <Pressable
-              style={styles.aiButton}
-              onPress={() => router.push('/ai-assistant')}
-            >
-              <MaterialIcons name="smart-toy" size={24} color={Colors.primary} />
-            </Pressable>
-          </View>
-          
-          <View style={styles.categoryBar}>
-            {(['all', 'nearest', 'cheapest', 'popular'] as const).map(cat => (
-              <Card
-                key={cat}
-                onPress={() => setSelectedCategory(cat)}
-                style={[
-                  styles.categoryChip,
-                  selectedCategory === cat && styles.categoryChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.categoryText,
-                    selectedCategory === cat && styles.categoryTextActive,
-                  ]}
-                >
-                  {cat === 'all' ? t('smartPick') : t(cat)}
-                </Text>
-              </Card>
-            ))}
+        {/* Statistics Cards */}
+        <View style={styles.statsGrid}>
+          <Card style={styles.statCard}>
+            <View style={styles.statHeader}>
+              <Text style={styles.statLabel}>TOTAL BOOKINGS</Text>
+              <MaterialIcons name="event" size={28} color={Colors.primary} />
+            </View>
+            <Text style={styles.statValue}>{totalBookings}</Text>
+            <Text style={styles.statChange}>↑ 12% this month</Text>
+          </Card>
+
+          <Card style={styles.statCard}>
+            <View style={styles.statHeader}>
+              <Text style={styles.statLabel}>ACTIVE BOOKINGS</Text>
+              <MaterialIcons name="location-on" size={28} color={Colors.primary} />
+            </View>
+            <Text style={styles.statValue}>{activeBookings}</Text>
+            <Text style={styles.statInfo}>Currently reserved</Text>
+          </Card>
+
+          <Card style={styles.statCard}>
+            <View style={styles.statHeader}>
+              <Text style={styles.statLabel}>TOTAL SPENT</Text>
+              <MaterialIcons name="currency-rupee" size={28} color={Colors.primary} />
+            </View>
+            <Text style={styles.statValue}>₹{totalSpent}</Text>
+            <Text style={[styles.statChange, { color: Colors.error }]}>↓ 5% vs last month</Text>
+          </Card>
+
+          <Card style={styles.statCard}>
+            <View style={styles.statHeader}>
+              <Text style={styles.statLabel}>AVAILABLE SPACES</Text>
+              <MaterialIcons name="trending-up" size={28} color={Colors.primary} />
+            </View>
+            <Text style={styles.statValue}>{availableSpaces}</Text>
+            <Text style={styles.statInfo}>of {totalSpaces} total</Text>
+          </Card>
+        </View>
+
+        {/* Nearby Parking Map */}
+        <View style={styles.mapSection}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionHeaderLeft}>
+              <MaterialIcons name="location-on" size={24} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>Nearby Parking</Text>
+            </View>
           </View>
 
-          <FlatList
-            data={recommendations}
-            keyExtractor={item => item.parking.id}
-            renderItem={({ item }) => (
-              <View style={styles.recommendationCard}>
-                <View style={styles.recommendationBadge}>
-                  <MaterialIcons name="auto-awesome" size={14} color={Colors.primary} />
-                  <Text style={styles.recommendationReason}>{item.reason}</Text>
+          <View style={styles.mapContainer}>
+            <ParkingMap
+              userLatitude={location?.coords.latitude || 13.0827}
+              userLongitude={location?.coords.longitude || 80.2707}
+              parkingSpaces={parkingSpaces}
+              onMarkerPress={(spaceId) =>
+                router.push({
+                  pathname: '/parking-details',
+                  params: { id: spaceId },
+                })
+              }
+            />
+          </View>
+        </View>
+
+        {/* AI Recommendations */}
+        <View style={styles.recommendationsSection}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionHeaderLeft}>
+              <MaterialIcons name="auto-awesome" size={24} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>AI Recommendations</Text>
+            </View>
+            <Button
+              title="Auto Allocate (AI)"
+              onPress={() => {
+                if (bestOverall) {
+                  router.push({
+                    pathname: '/parking-details',
+                    params: { id: bestOverall.parking.id },
+                  });
+                }
+              }}
+              size="small"
+              icon={<MaterialIcons name="flash-on" size={18} color={Colors.text} />}
+            />
+          </View>
+
+          {/* Best Overall */}
+          {bestOverall && (
+            <View style={styles.recommendationBox}>
+              <View style={styles.recommendationHeader}>
+                <MaterialIcons name="stars" size={20} color={Colors.primary} />
+                <Text style={styles.recommendationTitle}>Best Overall</Text>
+                <View style={styles.scoreBadge}>
+                  <Text style={styles.scoreText}>SCORE: {bestOverall.score.toFixed(3)}</Text>
                 </View>
-                <ParkingCard
-                  parking={item.parking}
-                  distance={item.distance}
+              </View>
+              <Pressable
+                style={styles.parkingRecommendCard}
+                onPress={() =>
+                  router.push({
+                    pathname: '/parking-details',
+                    params: { id: bestOverall.parking.id },
+                  })
+                }
+              >
+                <Image
+                  source={{ uri: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=400' }}
+                  style={styles.parkingThumb}
+                />
+                <View style={styles.parkingRecommendInfo}>
+                  <Text style={styles.parkingRecommendTitle} numberOfLines={1}>
+                    {bestOverall.parking.title}
+                  </Text>
+                  <Text style={styles.parkingRecommendPrice}>₹{bestOverall.parking.pricePerHour}/hr</Text>
+                  <Text style={styles.parkingRecommendAddress} numberOfLines={2}>
+                    {bestOverall.parking.address}
+                  </Text>
+                </View>
+                <View style={styles.bestOverallBadge}>
+                  <Text style={styles.badgeText}>BEST OVERALL</Text>
+                </View>
+              </Pressable>
+              <Text style={styles.recommendationReason}>
+                Optimal balance of distance (0.0km), price (₹{bestOverall.parking.pricePerHour}/hr), and 88% popularity
+              </Text>
+            </View>
+          )}
+
+          {/* Best Value & Most Popular Grid */}
+          <View style={styles.recommendationGrid}>
+            {/* Best Value */}
+            {bestValue && (
+              <View style={styles.recommendationBox}>
+                <View style={styles.recommendationHeader}>
+                  <MaterialIcons name="attach-money" size={20} color={Colors.success} />
+                  <Text style={styles.recommendationTitle}>Best Value</Text>
+                  <View style={[styles.scoreBadge, { backgroundColor: Colors.success + '20' }]}>
+                    <Text style={[styles.scoreText, { color: Colors.success }]}>SCORE: 10.000</Text>
+                  </View>
+                </View>
+                <Pressable
+                  style={styles.parkingRecommendCard}
                   onPress={() =>
                     router.push({
                       pathname: '/parking-details',
-                      params: { id: item.parking.id },
+                      params: { id: bestValue.parking.id },
                     })
                   }
-                />
+                >
+                  <Image
+                    source={{ uri: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=400' }}
+                    style={styles.parkingThumb}
+                  />
+                  <View style={styles.parkingRecommendInfo}>
+                    <Text style={styles.parkingRecommendTitle} numberOfLines={1}>
+                      {bestValue.parking.title}
+                    </Text>
+                    <Text style={styles.parkingRecommendPrice}>₹{bestValue.parking.pricePerHour}/hr</Text>
+                    <Text style={styles.parkingRecommendDistance}>{bestValue.distance.toFixed(1)}km</Text>
+                  </View>
+                  <View style={[styles.bestOverallBadge, { backgroundColor: Colors.success }]}>
+                    <Text style={styles.badgeText}>BEST VALUE</Text>
+                  </View>
+                </Pressable>
+                <Text style={styles.recommendationReason}>
+                  Just ₹{bestValue.parking.pricePerHour}/hr — best value option
+                </Text>
               </View>
             )}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>{t('noParkingAvailable')}</Text>
-            }
-            showsVerticalScrollIndicator={false}
-          />
+
+            {/* Most Popular */}
+            {mostPopular && (
+              <View style={styles.recommendationBox}>
+                <View style={styles.recommendationHeader}>
+                  <MaterialIcons name="trending-up" size={20} color={Colors.info} />
+                  <Text style={styles.recommendationTitle}>Most Popular</Text>
+                  <View style={[styles.scoreBadge, { backgroundColor: Colors.info + '20' }]}>
+                    <Text style={[styles.scoreText, { color: Colors.info }]}>SCORE: 95.000</Text>
+                  </View>
+                </View>
+                <Pressable
+                  style={styles.parkingRecommendCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/parking-details',
+                      params: { id: mostPopular.parking.id },
+                    })
+                  }
+                >
+                  <Image
+                    source={{ uri: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=400' }}
+                    style={styles.parkingThumb}
+                  />
+                  <View style={styles.parkingRecommendInfo}>
+                    <Text style={styles.parkingRecommendTitle} numberOfLines={1}>
+                      {mostPopular.parking.title}
+                    </Text>
+                    <Text style={styles.parkingRecommendPrice}>₹{mostPopular.parking.pricePerHour}/hr</Text>
+                    <Text style={styles.parkingRecommendDistance}>
+                      {mostPopular.distance.toFixed(1)}km
+                    </Text>
+                  </View>
+                  <View style={[styles.bestOverallBadge, { backgroundColor: Colors.info }]}>
+                    <Text style={styles.badgeText}>MOST POPULAR</Text>
+                  </View>
+                </Pressable>
+                <Text style={styles.recommendationReason}>
+                  95% popularity — highest rated by drivers
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-      </>
+      </ScrollView>
     );
   }
 
@@ -278,8 +438,179 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.lg,
     color: Colors.textSecondary,
   },
+  scrollView: {
+    flex: 1,
+  },
+  welcomeSection: {
+    padding: Spacing.lg,
+  },
+  welcomeTitle: {
+    fontSize: Typography.sizes.xl,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+  },
+  welcomeName: {
+    color: Colors.primary,
+    fontWeight: Typography.weights.bold,
+  },
+  welcomeSubtitle: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.textMuted,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '47%',
+    padding: Spacing.lg,
+    backgroundColor: Colors.surfaceLight,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.sm,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontWeight: Typography.weights.medium,
+    color: Colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  statValue: {
+    fontSize: 32,
+    fontWeight: Typography.weights.bold,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  statChange: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.success,
+  },
+  statInfo: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
+  },
+  mapSection: {
+    marginTop: Spacing.xl,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: Typography.sizes.lg,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.text,
+  },
   mapContainer: {
-    height: height * 0.4,
+    height: 300,
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+  },
+  recommendationsSection: {
+    padding: Spacing.lg,
+    marginTop: Spacing.xl,
+  },
+  recommendationBox: {
+    marginBottom: Spacing.xl,
+  },
+  recommendationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  recommendationTitle: {
+    fontSize: Typography.sizes.md,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.text,
+    flex: 1,
+  },
+  scoreBadge: {
+    backgroundColor: Colors.primary + '20',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+  },
+  scoreText: {
+    fontSize: 10,
+    fontWeight: Typography.weights.bold,
+    color: Colors.primary,
+  },
+  parkingRecommendCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  parkingThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.surface,
+  },
+  parkingRecommendInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+    justifyContent: 'center',
+  },
+  parkingRecommendTitle: {
+    fontSize: Typography.sizes.md,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  parkingRecommendPrice: {
+    fontSize: Typography.sizes.lg,
+    fontWeight: Typography.weights.bold,
+    color: Colors.primary,
+    marginBottom: 4,
+  },
+  parkingRecommendAddress: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
+  },
+  parkingRecommendDistance: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.primary,
+  },
+  bestOverallBadge: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: Typography.weights.bold,
+    color: Colors.text,
+  },
+  recommendationReason: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.textMuted,
+    lineHeight: 18,
+  },
+  recommendationGrid: {
+    flexDirection: 'row',
+    gap: Spacing.md,
   },
   content: {
     flex: 1,
@@ -309,69 +640,11 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     marginBottom: Spacing.xl,
   },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: Spacing.lg,
-  },
-  statValue: {
-    fontSize: Typography.sizes.xxl,
-    fontWeight: Typography.weights.bold,
-    color: Colors.text,
-    marginTop: Spacing.sm,
-  },
-  statLabel: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
-    marginTop: 4,
-    textAlign: 'center',
-  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.md,
-  },
-  sectionTitle: {
-    fontSize: Typography.sizes.xl,
-    fontWeight: Typography.weights.semibold,
-    color: Colors.text,
-  },
-  categoryBar: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  categoryChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
-  },
-  categoryChipActive: {
-    backgroundColor: Colors.primary,
-  },
-  categoryText: {
-    fontSize: Typography.sizes.sm,
-    fontWeight: Typography.weights.medium,
-    color: Colors.textMuted,
-  },
-  categoryTextActive: {
-    color: Colors.text,
-  },
-  recommendationCard: {
-    marginBottom: Spacing.md,
-  },
-  recommendationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
-  recommendationReason: {
-    fontSize: Typography.sizes.sm,
-    fontWeight: Typography.weights.medium,
-    color: Colors.primary,
   },
   emptyCard: {
     alignItems: 'center',
