@@ -44,7 +44,8 @@ export function ParkingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user) {
       loadData();
-      setupSubscriptions();
+      const cleanup = setupSubscriptions();
+      return cleanup;
     } else {
       setParkingSpaces([]);
       setBookings([]);
@@ -64,7 +65,7 @@ export function ParkingProvider({ children }: { children: ReactNode }) {
   }
 
   function setupSubscriptions() {
-    if (!user) return;
+    if (!user) return () => {};
 
     const parkingChannel = subscribeToParkingUpdates((payload) => {
       console.log('Parking update:', payload);
@@ -151,7 +152,6 @@ export function ParkingProvider({ children }: { children: ReactNode }) {
 
       await refreshBookings();
       
-      // Schedule reminder notification
       const parking = parkingSpaces.find(p => p.id === booking.parkingId);
       if (parking) {
         await scheduleBookingReminder(
@@ -216,7 +216,6 @@ export function ParkingProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Helper functions to convert database naming to camelCase
 function convertFromDb(space: any): ParkingSpace {
   return {
     id: space.id,

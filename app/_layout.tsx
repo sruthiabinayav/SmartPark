@@ -18,6 +18,7 @@ export default function RootLayout() {
                 <StatusBar style="light" />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="index" />
+                  <Stack.Screen name="onboarding" />
                   <Stack.Screen name="login" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen 
@@ -70,6 +71,15 @@ export default function RootLayout() {
                     options={{
                       headerShown: true,
                       headerTitle: 'Notifications',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="analytics"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Analytics',
                       headerStyle: { backgroundColor: '#0D0D0D' },
                       headerTintColor: '#FFFFFF',
                     }}

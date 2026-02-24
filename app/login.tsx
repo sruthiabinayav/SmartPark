@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 import { useAlert } from '@/template';
 import { UserRole } from '@/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -22,6 +23,14 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<UserRole>('driver');
+
+  useEffect(() => {
+    markOnboardingSeen();
+  }, []);
+
+  async function markOnboardingSeen() {
+    await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+  }
 
   async function handleSubmit() {
     if (!email || !password) {

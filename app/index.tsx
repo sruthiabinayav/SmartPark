@@ -1,22 +1,37 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter, Redirect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors } from '@/constants/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RootScreen() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!loading) {
+    checkOnboarding();
+  }, []);
+
+  async function checkOnboarding() {
+    const seen = await AsyncStorage.getItem('hasSeenOnboarding');
+    setHasSeenOnboarding(seen === 'true');
+  }
+
+  useEffect(() => {
+    if (!loading && hasSeenOnboarding !== null) {
       if (!user) {
-        router.replace('/login');
+        if (!hasSeenOnboarding) {
+          router.replace('/onboarding');
+        } else {
+          router.replace('/login');
+        }
       }
     }
-  }, [user, loading]);
+  }, [user, loading, hasSeenOnboarding]);
 
-  if (loading) {
+  if (loading || hasSeenOnboarding === null) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={Colors.primary} />

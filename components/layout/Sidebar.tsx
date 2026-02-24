@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, Pressable, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 import { useAlert } from '@/template';
+import { Image } from 'expo-image';
 
 interface NavItem {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -32,6 +33,7 @@ export function Sidebar() {
         { icon: 'dashboard', label: t('dashboard'), route: '/(tabs)' },
         { icon: 'add-circle-outline', label: t('addParking'), route: '/add-parking' },
         { icon: 'event', label: t('bookingRequests'), route: '/(tabs)/bookings' },
+        { icon: 'analytics', label: 'Analytics', route: '/analytics' },
         { icon: 'smart-toy', label: t('aiAssistant'), route: '/ai-assistant' },
         { icon: 'settings', label: t('profile'), route: '/(tabs)/profile' },
       ];
@@ -63,7 +65,7 @@ export function Sidebar() {
         <Image
           source={require('@/assets/images/logo.png')}
           style={styles.logo}
-          resizeMode="contain"
+          contentFit="contain"
         />
         <Text style={styles.appName}>SmartPark</Text>
       </View>
@@ -80,7 +82,7 @@ export function Sidebar() {
         </View>
       </View>
 
-      <ScrollView style={styles.nav} showsVerticalScrollIndicator={false}>
+      <View style={styles.nav}>
         {navItems.map((item) => {
           const active = isActive(item.route);
           return (
@@ -110,7 +112,7 @@ export function Sidebar() {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
       <Pressable
         style={({ pressed }) => [
