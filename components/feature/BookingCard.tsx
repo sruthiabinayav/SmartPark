@@ -1,19 +1,17 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Booking, UserRole } from '@/types';
+import { Booking } from '@/types';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
 interface BookingCardProps {
   booking: Booking;
-  userRole: UserRole;
   onCancel?: () => void;
-  onComplete?: () => void;
-  onReview?: () => void;
+  showActions?: boolean;
 }
 
-export function BookingCard({ booking, userRole, onCancel, onComplete, onReview }: BookingCardProps) {
+export function BookingCard({ booking, onCancel, showActions = true }: BookingCardProps) {
   const startDate = new Date(booking.startTime);
   const endDate = new Date(booking.endTime);
   
@@ -27,8 +25,10 @@ export function BookingCard({ booking, userRole, onCancel, onComplete, onReview 
 
   const getStatusColor = () => {
     switch (booking.status) {
-      case 'active':
+      case 'confirmed':
         return Colors.success;
+      case 'pending':
+        return Colors.warning;
       case 'cancelled':
         return Colors.error;
       case 'completed':
@@ -42,7 +42,7 @@ export function BookingCard({ booking, userRole, onCancel, onComplete, onReview 
     <Card style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title} numberOfLines={1}>
-          {booking.parking?.title || 'Parking Space'}
+          {booking.parkingSpace?.title || 'Parking Space'}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
           <Text style={[styles.statusText, { color: getStatusColor() }]}>
@@ -51,17 +51,10 @@ export function BookingCard({ booking, userRole, onCancel, onComplete, onReview 
         </View>
       </View>
 
-      {userRole === 'owner' && booking.driver && (
-        <View style={styles.infoRow}>
-          <MaterialIcons name="person" size={16} color={Colors.textMuted} />
-          <Text style={styles.infoText}>Driver: {booking.driver.name}</Text>
-        </View>
-      )}
-
       <View style={styles.infoRow}>
         <MaterialIcons name="location-on" size={16} color={Colors.textMuted} />
         <Text style={styles.address} numberOfLines={1}>
-          {booking.parking?.address || 'Address not available'}
+          {booking.parkingSpace?.address || 'Address not available'}
         </Text>
       </View>
 
@@ -85,35 +78,16 @@ export function BookingCard({ booking, userRole, onCancel, onComplete, onReview 
       <View style={styles.footer}>
         <View>
           <Text style={styles.priceLabel}>Total Price</Text>
-          <Text style={styles.price}>₹{booking.totalPrice.toFixed(2)}</Text>
+          <Text style={styles.price}>${booking.totalPrice.toFixed(2)}</Text>
         </View>
-        <View style={styles.actions}>
-          {onReview && booking.status === 'completed' && (
-            <Button
-              title="Review"
-              onPress={onReview}
-              variant="primary"
-              size="small"
-              icon={<MaterialIcons name="star" size={16} color={Colors.text} />}
-            />
-          )}
-          {onComplete && booking.status === 'active' && (
-            <Button
-              title="Complete"
-              onPress={onComplete}
-              variant="primary"
-              size="small"
-            />
-          )}
-          {onCancel && booking.status === 'active' && (
-            <Button
-              title="Cancel"
-              onPress={onCancel}
-              variant="outline"
-              size="small"
-            />
-          )}
-        </View>
+        {showActions && booking.status === 'confirmed' && onCancel && (
+          <Button
+            title="Cancel"
+            onPress={onCancel}
+            variant="outline"
+            size="small"
+          />
+        )}
       </View>
     </Card>
   );
@@ -150,11 +124,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
-  infoText: {
-    fontSize: Typography.sizes.sm,
-    color: Colors.textSecondary,
+    marginBottom: Spacing.md,
   },
   address: {
     flex: 1,
@@ -196,9 +166,5 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
     color: Colors.primary,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
   },
 });

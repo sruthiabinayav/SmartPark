@@ -51,27 +51,27 @@ export default function ProfileScreen() {
     {
       icon: 'person-outline',
       title: t('editProfile'),
-      onPress: () => router.push('/edit-profile'),
+      onPress: () => showAlert(t('comingSoon'), 'Profile editing will be available soon'),
     },
     {
       icon: 'notifications-outline',
       title: t('notifications'),
-      onPress: () => router.push('/notification-settings'),
+      onPress: () => showAlert(t('comingSoon'), 'Notification settings will be available soon'),
     },
     {
       icon: 'payment',
       title: t('paymentMethods'),
-      onPress: () => router.push('/payment-methods'),
+      onPress: () => showAlert(t('comingSoon'), 'Payment methods will be available soon'),
     },
     {
       icon: 'help-outline',
       title: t('helpSupport'),
-      onPress: () => router.push('/help-support'),
+      onPress: () => showAlert(t('comingSoon'), 'Help center will be available soon'),
     },
     {
       icon: 'privacy-tip',
       title: t('privacyPolicy'),
-      onPress: () => router.push('/privacy-policy'),
+      onPress: () => showAlert(t('comingSoon'), 'Privacy policy will be available soon'),
     },
   ];
 
