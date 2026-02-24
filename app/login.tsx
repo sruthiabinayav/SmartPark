@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
@@ -57,11 +57,34 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
+          <Image
+            source={require('@/assets/images/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.logo}>SmartPark</Text>
           <Text style={styles.subtitle}>
             {isSignup ? t('createAccount') : t('welcomeBack')}
           </Text>
         </View>
+
+        {!isSignup && (
+          <View style={styles.demoBox}>
+            <Text style={styles.demoTitle}>Demo Accounts</Text>
+            <View style={styles.demoItem}>
+              <MaterialIcons name="drive-eta" size={16} color={Colors.primary} />
+              <Text style={styles.demoText}>Driver: karthik@email.com / pass123</Text>
+            </View>
+            <View style={styles.demoItem}>
+              <MaterialIcons name="business" size={16} color={Colors.primary} />
+              <Text style={styles.demoText}>Owner: murugan@email.com / pass123</Text>
+            </View>
+            <View style={styles.demoItem}>
+              <MaterialIcons name="admin-panel-settings" size={16} color={Colors.primary} />
+              <Text style={styles.demoText}>Admin: admin@smartpark.com / admin123</Text>
+            </View>
+          </View>
+        )}
 
         <View style={styles.form}>
           {isSignup && (
@@ -173,6 +196,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xl,
   },
+  logoImage: {
+    width: 80,
+    height: 80,
+    marginBottom: Spacing.sm,
+  },
   logo: {
     fontSize: Typography.sizes.xxxl,
     fontWeight: Typography.weights.bold,
@@ -181,6 +209,30 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: Typography.sizes.lg,
+    color: Colors.textSecondary,
+  },
+  demoBox: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
+  demoTitle: {
+    fontSize: Typography.sizes.md,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.primary,
+    marginBottom: Spacing.md,
+  },
+  demoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  demoText: {
+    fontSize: Typography.sizes.sm,
     color: Colors.textSecondary,
   },
   form: {
