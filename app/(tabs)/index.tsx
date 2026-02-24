@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, Dimensions, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { Screen } from '@/components/layout/Screen';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ParkingMap } from '@/components/feature/ParkingMap';
+import { ParkingCard } from '@/components/feature/ParkingCard';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 import { ParkingSpace, ParkingRecommendation } from '@/types';
 import {
