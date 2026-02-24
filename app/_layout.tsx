@@ -84,6 +84,51 @@ export default function RootLayout() {
                       headerTintColor: '#FFFFFF',
                     }}
                   />
+                  <Stack.Screen 
+                    name="edit-profile"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Edit Profile',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="notification-settings"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Notifications',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="payment-methods"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Payment Methods',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="help-support"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Help & Support',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="privacy-policy"
+                    options={{
+                      headerShown: true,
+                      headerTitle: 'Privacy Policy',
+                      headerStyle: { backgroundColor: '#0D0D0D' },
+                      headerTintColor: '#FFFFFF',
+                    }}
+                  />
                 </Stack>
               </ParkingProvider>
             </NotificationProvider>
