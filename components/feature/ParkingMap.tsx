@@ -42,10 +42,14 @@ export function ParkingMap({
       initialRegion={{
         latitude: userLatitude,
         longitude: userLongitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
       }}
-      customMapStyle={mapDarkStyle}
+      showsUserLocation
+      showsMyLocationButton
+      showsCompass
+      zoomEnabled
+      rotateEnabled={false}
     >
       <Marker
         coordinate={{

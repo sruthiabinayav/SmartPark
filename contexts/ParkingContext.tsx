@@ -105,7 +105,7 @@ export function ParkingProvider({ children }: { children: ReactNode }) {
 
   async function addParkingSpace(parking: Omit<ParkingSpace, 'id' | 'createdAt'>) {
     try {
-      await dbCreateParkingSpace(parking);
+      const result = await dbCreateParkingSpace(parking);
       await refreshParkingSpaces();
       
       await scheduleLocalNotification(
@@ -113,7 +113,10 @@ export function ParkingProvider({ children }: { children: ReactNode }) {
         `Your parking space "${parking.title}" is now live!`,
         { type: 'parking_created' }
       );
+      
+      return result;
     } catch (error: any) {
+      console.error('Error in addParkingSpace:', error);
       throw new Error(error.message || 'Failed to create parking space');
     }
   }

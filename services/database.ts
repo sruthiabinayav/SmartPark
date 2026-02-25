@@ -32,20 +32,23 @@ export async function createParkingSpace(parking: Omit<ParkingSpace, 'id' | 'cre
     .insert({
       owner_id: parking.ownerId,
       title: parking.title,
-      description: parking.description,
+      description: parking.description || '',
       address: parking.address,
       latitude: parking.latitude,
       longitude: parking.longitude,
       price_per_hour: parking.pricePerHour,
       parking_type: parking.parkingType,
       space_type: parking.spaceType,
-      features: parking.features,
-      available: parking.available,
+      features: parking.features || [],
+      available: parking.available !== undefined ? parking.available : true,
     })
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Database error creating parking space:', error);
+    throw new Error(error.message || 'Failed to create parking space');
+  }
   return data;
 }
 

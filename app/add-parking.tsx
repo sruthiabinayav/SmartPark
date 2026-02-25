@@ -103,8 +103,7 @@ export default function AddParkingScreen() {
 
     setLoading(true);
     try {
-      const newParking: ParkingSpace = {
-        id: `parking_${Date.now()}`,
+      const newParking = {
         ownerId: user!.id,
         title,
         description: description || `${parkingType} parking at ${spaceType}`,
@@ -116,15 +115,16 @@ export default function AddParkingScreen() {
         parkingType,
         spaceType,
         features,
-        createdAt: new Date().toISOString(),
       };
 
       await addParkingSpace(newParking);
       showAlert(t('success'), 'Parking space added successfully!', [
         { text: t('ok'), onPress: () => router.back() },
       ]);
-    } catch (error) {
-      showAlert(t('error'), 'Failed to add parking space');
+    } catch (error: any) {
+      console.error('Add parking error:', error);
+      const errorMessage = error.message || 'Failed to add parking space';
+      showAlert(t('error'), errorMessage);
     } finally {
       setLoading(false);
     }
